@@ -1,0 +1,69 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Configure AWS CLI
+    - name: Configure AWS CLI
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+      run: |
+        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+        aws configure set region $AWS_REGION
+
+    # Login to Amazon ECR
+    - name: Log in to Amazon ECR
+      run: |
+        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
+
+    # Download certs
+    - name: Download certs
+      run: |
+        mkdir -p certs
+        echo "${{ secrets.CERT_FILE }}" > certs/us-east-2-bundle.pem
+
+    # Build and push Docker image
+    - name: Build and push Docker image
+      run: |
+        docker build -t gta-6-backend .
+        docker tag gta-6-backend:latest ${{ secrets.ECR_REPOSITORY_URI }}:latest
+        docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
+
+    # Add SSH key
+    - name: Add SSH key
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.EC2_PRIVATE_KEY }}
+
+    # Deploy Docker container on EC2
+    - name: Deploy Docker container on EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
+        docker stop gta-6-backend || true
+        docker rm gta-6-backend || true
+        docker pull ${{ secrets.ECR_REPOSITORY_URI }}:latest
+        docker run -d \
+          -e DB_HOST=${{ secrets.RDS_HOST }} \
+          -e DB_PORT=${{ secrets.RDS_PORT }} \
+          -e DB_USER=${{ secrets.RDS_USER }} \
+          -e DB_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+          -e DB_DATABASE=${{ secrets.RDS_DATABASE }} \
+          -p 5000:5000 \
+          --name gta-6-backend \
+          ${{ secrets.ECR_REPOSITORY_URI }}:latest
+        EOF

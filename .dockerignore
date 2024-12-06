@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+logs
+
+.DS_Store
+Thumbs.db
+
+.vscode
+.idea
+*.lock
+*.log
+
+.secret

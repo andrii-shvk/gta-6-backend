@@ -12,8 +12,13 @@ app.use(express.json());
 app.use(cors());
 app.use("/api", userRouter);
 
+app.get('/', (req, res) => {
+    res.send('Welcome to the GTA-6 Backend API!');
+});
+
 pool.connect()
     .then(() => console.log("Connected to the database!"))
     .catch((err: any) => console.error("Connection error", err));
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
