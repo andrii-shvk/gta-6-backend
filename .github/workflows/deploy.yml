@@ -39,8 +39,8 @@ jobs:
       - name: Build and push Docker image
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)
-          docker build -t gta-6-backend:$IMAGE_TAG .
-          docker tag gta-6-backend:$IMAGE_TAG ${{ secrets.ECR_REPOSITORY_URI }}:$IMAGE_TAG
+          docker build -t gta-6-backend:${IMAGE_TAG} .
+          docker tag gta-6-backend:$IMAGE_TAG ${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}
           docker push ${{ secrets.ECR_REPOSITORY_URI }}:$IMAGE_TAG
         env:
           IMAGE_TAG: ${{ github.sha }}
@@ -52,7 +52,7 @@ jobs:
             --family task-gta-6 \
             --container-definitions '[{
               "name": "gta-6",
-              "image": "${{ secrets.ECR_REPOSITORY_URI }}:$IMAGE_TAG",
+              "image": "${{ secrets.ECR_REPOSITORY_URI }}:${{ env.IMAGE_TAG }}",
               "memory": 2048,
               "cpu": 1024,
               "portMappings": [
