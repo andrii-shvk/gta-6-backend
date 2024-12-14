@@ -30,18 +30,13 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
 
-      - name: Display image tag and repository URI
-        run: |
-          echo "ECR Repository URI: ${{ secrets.ECR_REPOSITORY_URI }}"
-          echo "Image Tag: $IMAGE_TAG"
-
       # Build and push Docker image
       - name: Build and push Docker image
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)
           docker build -t gta-6-backend:${IMAGE_TAG} .
           docker tag gta-6-backend:$IMAGE_TAG ${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}
-          docker push ${{ secrets.ECR_REPOSITORY_URI }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}
         env:
           IMAGE_TAG: ${{ github.sha }}
 
