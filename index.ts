@@ -18,7 +18,6 @@ app.get('/health', (req, res) => {
 app.get('/work', (req, res) => {
     res.send('Work!');
 })
-// подождать service deploymenrs, если что увеличить память EC2
 
 app.get('/', (req, res) => {
     res.send('Welcome to the GTA-6 Backend API!');

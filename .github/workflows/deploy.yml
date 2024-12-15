@@ -47,7 +47,7 @@ jobs:
             --family task-gta-6 \
             --container-definitions '[{
               "name": "gta-6",
-              "image": "${{ secrets.ECR_REPOSITORY_URI }}:${{ env.IMAGE_TAG }}",
+              "image": "${{ secrets.ECR_REPOSITORY_URI }}:'"${IMAGE_TAG}"'",
               "memory": 2048,
               "cpu": 1024,
               "portMappings": [
@@ -62,7 +62,7 @@ jobs:
               ]
             }]'
         env:
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: $(git rev-parse --short HEAD)
 
       # Update ECS Service
       - name: Update ECS Service
