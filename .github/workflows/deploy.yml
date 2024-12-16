@@ -56,7 +56,7 @@ jobs:
               \"memory\": 2048,
               \"cpu\": 1024,
               \"portMappings\": [
-                {\"containerPort\": 5000, \"hostPort\": 0, \"protocol\": \"tcp\"}
+                {\"containerPort\": 5000, \"hostPort\": 5000, \"protocol\": \"tcp\"}
               ],
               \"environment\": [
                 {\"name\": \"DB_HOST\", \"value\": \"${{ secrets.RDS_HOST }}\"},
