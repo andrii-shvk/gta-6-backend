@@ -30,6 +30,12 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
 
+      # Download certs
+      - name: Download certs
+        run: |
+          mkdir -p certs
+          echo "${{ secrets.CERT_FILE }}" > certs/us-east-2-bundle.pem
+
       # Build and push Docker image
       - name: Build and push Docker image
         run: |
