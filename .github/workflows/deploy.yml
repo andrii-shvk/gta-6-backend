@@ -1,10 +1,3 @@
-name: Deploy to AWS
-
-on:
-  push:
-    branches:
-      - master
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -25,7 +18,7 @@ jobs:
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
           aws configure set region $AWS_REGION
 
-      # Login to Amazon ECR
+      # Log in to Amazon ECR
       - name: Log in to Amazon ECR
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
@@ -43,39 +36,37 @@ jobs:
           docker build -t gta-6-backend:${IMAGE_TAG} .
           docker tag gta-6-backend:${IMAGE_TAG} ${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}
           docker push ${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}
-        env:
-          IMAGE_TAG: ${{ github.sha }}
 
-      # Register new ECS Task Definition
-      - name: Update ECS Task Definition
+      # Register new ECS Task Definition (update with new image)
+      - name: Register ECS Task Definition
         run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)
           aws ecs register-task-definition \
             --family task-gta-6 \
-            --container-definitions '[{
-              "name": "gta-6",
-              "image": "${{ secrets.ECR_REPOSITORY_URI }}:${{ env.IMAGE_TAG }}",
-              "memory": 2048,
-              "cpu": 1024,
-              "portMappings": [
-                {"containerPort": 5000, "hostPort": 5000, "protocol": "tcp"}
+            --container-definitions "[{
+              \"name\": \"gta-6\",
+              \"image\": \"${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}\",
+              \"memory\": 2048,
+              \"cpu\": 1024,
+              \"portMappings\": [
+                {\"containerPort\": 5000, \"hostPort\": 5000, \"protocol\": \"tcp\"}
               ],
-              "environment": [
-                {"name": "DB_HOST", "value": "${{ secrets.RDS_HOST }}"},
-                {"name": "DB_PORT", "value": "${{ secrets.RDS_PORT }}"},
-                {"name": "DB_USER", "value": "${{ secrets.RDS_USER }}"},
-                {"name": "DB_PASSWORD", "value": "${{ secrets.RDS_PASSWORD }}"},
-                {"name": "DB_DATABASE", "value": "${{ secrets.RDS_DATABASE }}"}
+              \"environment\": [
+                {\"name\": \"DB_HOST\", \"value\": \"${{ secrets.RDS_HOST }}\"},
+                {\"name\": \"DB_PORT\", \"value\": \"${{ secrets.RDS_PORT }}\"},
+                {\"name\": \"DB_USER\", \"value\": \"${{ secrets.RDS_USER }}\"},
+                {\"name\": \"DB_PASSWORD\", \"value\": \"${{ secrets.RDS_PASSWORD }}\"},
+                {\"name\": \"DB_DATABASE\", \"value\": \"${{ secrets.RDS_DATABASE }}\"}
               ]
-            }]'
-        env:
-          IMAGE_TAG: ${{ github.sha }}
+            }]"
 
-      # Update ECS Service
+      # Update ECS Service to use the new task definition revision
       - name: Update ECS Service
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)
+          TASK_REVISION=$(aws ecs describe-task-definition --task-definition task-gta-6 | jq -r '.taskDefinition.revision')
           aws ecs update-service \
             --cluster demo-ecs \
             --service gta-6-service \
             --force-new-deployment \
-            --task-definition task-gta-6:${IMAGE_TAG}
+            --task-definition task-gta-6:${TASK_REVISION}
