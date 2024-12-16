@@ -1,3 +1,10 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - master
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -37,7 +44,7 @@ jobs:
           docker tag gta-6-backend:${IMAGE_TAG} ${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}
           docker push ${{ secrets.ECR_REPOSITORY_URI }}:${IMAGE_TAG}
 
-      # Register new ECS Task Definition (update with new image)
+      # Register ECS Task Definition (update with new image)
       - name: Register ECS Task Definition
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)
