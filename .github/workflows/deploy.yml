@@ -73,7 +73,9 @@ jobs:
       # Update ECS Service
       - name: Update ECS Service
         run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)
           aws ecs update-service \
             --cluster demo-ecs \
             --service gta-6-service \
-            --force-new-deployment
+            --force-new-deployment \
+            --task-definition task-gta-6:${IMAGE_TAG}
