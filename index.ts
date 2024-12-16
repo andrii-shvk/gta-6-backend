@@ -15,8 +15,8 @@ app.use("/api", userRouter);
 app.get('/health', (req, res) => {
     res.status(200).json({status: 'healthy'})
 })
-app.get('/work', (req, res) => {
-    res.send('Work!');
+app.get('/job', (req, res) => {
+    res.send('job!');
 })
 
 app.get('/', (req, res) => {
