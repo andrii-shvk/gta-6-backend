@@ -11,3 +11,4 @@ services:
       DB_DATABASE: ${DB_DATABASE}
     ports:
       - "5000:5000"
+    restart: unless-stopped
