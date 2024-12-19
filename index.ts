@@ -12,6 +12,13 @@ app.use(express.json());
 app.use(cors());
 app.use("/api", userRouter);
 
+app.get('/health', (req, res) => {
+    res.status(200).json({status: 'healthy'})
+})
+app.get('/host', (req, res) => {
+    res.send('host:0 working! Congratulations!');
+})
+
 app.get('/', (req, res) => {
     res.send('Welcome to the GTA-6 Backend API!');
 });
